@@ -1,0 +1,67 @@
+---
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+
+- name: Add a new user
+  user:
+    name: "{{ user_name }}"
+    password: "{{ user_password | password_hash('sha512') }}"
+    shell: /bin/bash
+
+- name: Ensure the SSH directory exists for the new user
+  file:
+    path: "/home/{{ user_name }}/.ssh"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: "0700"
+
+- name: Add SSH key to authorized_keys
+  authorized_key:
+    user: "{{ user_name }}"
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+- name: Grant sudo privileges to the new user
+  copy:
+    content: "{{ user_name }} ALL=(ALL) NOPASSWD:ALL"
+    dest: /etc/sudoers.d/user_name"
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Update apt and install required system packages
+  apt:
+    pkg:
+      - curl
+      - vim
+      - git
+      - ufw
+      - tmux
+    state: latest
+    update_cache: true
+
+# Secure SSH settings
+- name: Disable root login and enforce key-based authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    create: yes
+  with_items:
+    - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+    - { regexp: "^#?PubkeyAuthentication", line: "PubkeyAuthentication yes" }
+  notify: Restart SSH
+
+- name: Allow only specific users for SSH access
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?AllowUsers"
+    line: "AllowUsers {{ user_name }}"
+    create: yes
+  notify: Restart SSH

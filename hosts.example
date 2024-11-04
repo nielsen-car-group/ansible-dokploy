@@ -1,0 +1,2 @@
+[servers]
+vps ansible_host=vps-3940229.vps.ovh.us ansible_port=22

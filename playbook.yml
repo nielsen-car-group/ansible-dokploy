@@ -1,0 +1,11 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - user
+    - ufw
+    - dokploy
+
+  vars:
+    user_name: admin
+    user_password: admin

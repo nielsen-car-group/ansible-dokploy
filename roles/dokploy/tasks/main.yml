@@ -1,0 +1,6 @@
+---
+# tasks/main.yml
+
+- name: Install Dokploy
+  ansible.builtin.shell:
+    cmd: curl -sSL https://dokploy.com/install.sh | sh
