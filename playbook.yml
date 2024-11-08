@@ -2,10 +2,13 @@
 - hosts: all
   become: true
   roles:
+    - packages
+    - ssh
+    - fail2ban
     - user
     - ufw
     - dokploy
 
   vars:
-    user_name: admin
-    user_password: admin
+    user_name: admin # replace with your username
+    user_password: mysecretpassword # replace with your password

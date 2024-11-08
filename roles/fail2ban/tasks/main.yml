@@ -1,0 +1,33 @@
+---
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: latest
+    update_cache: yes
+
+- name: Ensure fail2ban is enabled and started
+  systemd:
+    name: fail2ban
+    enabled: yes
+    state: started
+
+- name: Create a custom fail2ban jail for SSH
+  copy:
+    dest: /etc/fail2ban/jail.d/ssh.local
+    content: |
+      [sshd]
+      enabled  = true
+      port     = ssh
+      filter   = sshd
+      logpath  = /var/log/auth.log
+      maxretry = 3
+      bantime  = 600
+      findtime = 600
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart fail2ban to apply new configuration
+  systemd:
+    name: fail2ban
+    state: restarted

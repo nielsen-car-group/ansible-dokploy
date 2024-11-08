@@ -1,0 +1,22 @@
+# Secure SSH settings
+# Secure SSH settings for pubkey-only authentication
+- name: Replace /etc/ssh/sshd_config with secure pubkey-only configuration
+  copy:
+    dest: /etc/ssh/sshd_config
+    content: |
+      # SSHD Configuration - Secure for Pubkey Only
+      PermitRootLogin no
+      PasswordAuthentication no
+      PubkeyAuthentication yes
+      ChallengeResponseAuthentication no
+      UsePAM yes
+      X11Forwarding no
+      AllowTcpForwarding no
+      PermitEmptyPasswords no
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+    owner: root
+    group: root
+    mode: "0600"
+    backup: yes
+  notify: Restart SSH

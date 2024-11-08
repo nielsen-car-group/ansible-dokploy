@@ -1,10 +1,4 @@
 ---
-- name: Install aptitude
-  apt:
-    name: aptitude
-    state: latest
-    update_cache: true
-
 - name: Add a new user
   user:
     name: "{{ user_name }}"
@@ -33,35 +27,29 @@
     group: root
     mode: 0440
 
-- name: Update apt and install required system packages
-  apt:
-    pkg:
-      - curl
-      - vim
-      - git
-      - ufw
-      - tmux
-    state: latest
-    update_cache: true
+# Copy the security script to the target machine
+- name: Copy security script to target machine
+  copy:
+    src: "{{ playbook_dir }}/scripts/security.sh" # Relative to the playbook.yml
+    dest: /root/security.sh
+    owner: root
+    group: root
+    mode: 0755
 
-# Secure SSH settings
-- name: Disable root login and enforce key-based authentication
+# Ensure the SSH security functions script is executable
+- name: Ensure the script is executable
+  file:
+    path: /root//security.sh
+    owner: root
+    group: root
+    mode: 0755
+
+# Source the SSH functions script in user's .bashrc
+- name: Source the SSH functions script in user's .bashrc
   lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
+    path: /root/.bashrc
+    line: "source /root/security.sh"
+    create: yes
     state: present
-    create: yes
-  with_items:
-    - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
-    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
-    - { regexp: "^#?PubkeyAuthentication", line: "PubkeyAuthentication yes" }
-  notify: Restart SSH
-
-- name: Allow only specific users for SSH access
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?AllowUsers"
-    line: "AllowUsers {{ user_name }}"
-    create: yes
-  notify: Restart SSH
+    owner: root
+    group: root
