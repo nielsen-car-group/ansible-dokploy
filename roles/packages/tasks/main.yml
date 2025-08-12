@@ -1,11 +1,14 @@
 ---
+- name: Update apt cache once
+  apt:
+    update_cache: yes
+
 - name: Install aptitude
   apt:
     name: aptitude
-    state: latest
-    update_cache: true
+    state: present
 
-- name: Update apt and install required system packages
+- name: Install required system packages
   apt:
     pkg:
       - curl
@@ -14,5 +17,39 @@
       - ufw
       - tmux
       - net-tools
-    state: latest
-    update_cache: true
+    state: present
+
+- name: Ensure unattended-upgrades is installed
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Enable unattended-upgrades auto update package lists
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure unattended-upgrades for security updates only
+  copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+        "${distro_id}:${distro_codename}-security";
+      };
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable and start unattended-upgrades service (if applicable)
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    enabled: yes
+    state: started
+  when: ansible_service_mgr == 'systemd'

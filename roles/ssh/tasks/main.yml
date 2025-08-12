@@ -1,10 +1,10 @@
-# Secure SSH settings
 # Secure SSH settings for pubkey-only authentication
 - name: Replace /etc/ssh/sshd_config with secure pubkey-only configuration
   copy:
     dest: /etc/ssh/sshd_config
     content: |
       # SSHD Configuration - Secure for Pubkey Only
+      Port 2275
       PermitRootLogin no
       PasswordAuthentication no
       PubkeyAuthentication yes
@@ -18,5 +18,5 @@
     owner: root
     group: root
     mode: "0600"
-    backup: yes
   notify: Restart SSH
+

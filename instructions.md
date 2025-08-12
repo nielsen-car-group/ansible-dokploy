@@ -8,7 +8,7 @@ Follow install [guide](https://docs.ansible.com/ansible/latest/installation_guid
 exit after logging in
 
 ## ssh 
-`ansible-playbook -i hosts playbook.yml -l vps -u root -k --ask-become-pass` replace root with whichever username was provided by your provider
+`ansible-playbook -i hosts playbook.yml -l vps -u root --become` replace root with whichever username was provided by your provider
 
 This playbook will change your default ssh port from 22 to 2275, be sure to update your hosts file with the new port after the playbook finishes.
 

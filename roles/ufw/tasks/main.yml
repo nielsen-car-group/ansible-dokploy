@@ -4,15 +4,22 @@
     state: reset
   tags: ufw_rules
 
-- name: UFW - Set default policy to deny
+- name: UFW - Set default incoming policy to deny
   community.general.ufw:
-    default: deny
+    direction: incoming
+    policy: deny
+  tags: ufw_rules
+
+- name: UFW - Set default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
   tags: ufw_rules
 
 - name: UFW - Allow SSH Server
   community.general.ufw:
     rule: allow
-    port: 22
+    port: 2275
     proto: tcp
   tags: ufw_rules
 
@@ -33,4 +40,5 @@
 - name: UFW - Enable UFW
   community.general.ufw:
     state: enabled
+    logging: 'on'           # Optional, enable logging
   tags: ufw_rules

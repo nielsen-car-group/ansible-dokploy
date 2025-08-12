@@ -26,8 +26,4 @@
     owner: root
     group: root
     mode: 0644
-
-- name: Restart fail2ban to apply new configuration
-  systemd:
-    name: fail2ban
-    state: restarted
+  notify: Restart fail2ban

@@ -1,6 +1,9 @@
----
-# tasks/main.yml
+- name: Check if Dokploy container is running
+  community.docker.docker_container_info:
+    name: dokploy
+  register: dokploy_container
+  ignore_errors: true
 
-- name: Install Dokploy
-  ansible.builtin.shell:
-    cmd: curl -sSL https://dokploy.com/install.sh | sh
+- name: Install Dokploy if not running
+  ansible.builtin.shell: curl -sSL https://dokploy.com/install.sh | sh
+  when: dokploy_container.containers is not defined or dokploy_container.containers | length == 0

@@ -4,6 +4,7 @@
     name: "{{ user_name }}"
     password: "{{ user_password | password_hash('sha512') }}"
     shell: /bin/bash
+    create_home: yes
 
 - name: Ensure the SSH directory exists for the new user
   file:
@@ -17,12 +18,12 @@
   authorized_key:
     user: "{{ user_name }}"
     state: present
-    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 
 - name: Grant sudo privileges to the new user
   copy:
     content: "{{ user_name }} ALL=(ALL) NOPASSWD:ALL"
-    dest: /etc/sudoers.d/user_name"
+    dest: "/etc/sudoers.d/{{ user_name }}"
     owner: root
     group: root
     mode: 0440
@@ -30,26 +31,23 @@
 # Copy the security script to the target machine
 - name: Copy security script to target machine
   copy:
-    src: "{{ playbook_dir }}/scripts/security.sh" # Relative to the playbook.yml
+    src: "{{ playbook_dir }}/scripts/security.sh"  # Relative to the playbook.yml
     dest: /root/security.sh
     owner: root
     group: root
     mode: 0755
 
-# Ensure the SSH security functions script is executable
+# Ensure the SSH security functions script is executable (redundant but safe)
 - name: Ensure the script is executable
   file:
-    path: /root//security.sh
+    path: /root/security.sh
     owner: root
     group: root
     mode: 0755
 
-# Source the SSH functions script in user's .bashrc
-- name: Source the SSH functions script in user's .bashrc
+# Source the SSH functions script in root's .bashrc
+- name: Source the SSH functions script in root's .bashrc
   lineinfile:
     path: /root/.bashrc
     line: "source /root/security.sh"
     create: yes
-    state: present
-    owner: root
-    group: root
