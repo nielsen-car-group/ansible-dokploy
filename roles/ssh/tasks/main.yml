@@ -11,7 +11,7 @@
       ChallengeResponseAuthentication no
       UsePAM yes
       X11Forwarding no
-      AllowTcpForwarding no
+      AllowTcpForwarding local
       PermitEmptyPasswords no
       ClientAliveInterval 300
       ClientAliveCountMax 2
