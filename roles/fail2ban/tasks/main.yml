@@ -11,19 +11,28 @@
     enabled: yes
     state: started
 
-- name: Create a custom fail2ban jail for SSH
+- name: Create a custom fail2ban jail for SSH with aggressive mode
   copy:
     dest: /etc/fail2ban/jail.d/ssh.local
     content: |
       [sshd]
       enabled  = true
       port     = ssh
-      filter   = sshd
+      filter   = sshd[mode=aggressive]
       logpath  = /var/log/auth.log
       maxretry = 3
       bantime  = 600
       findtime = 600
+      backend  = systemd
+      # Optional: add ignoreip to whitelist IPs
+      # ignoreip = 127.0.0.1/8 <your_ip_here>
     owner: root
     group: root
     mode: 0644
   notify: Restart fail2ban
+
+- name: Restart fail2ban
+  systemd:
+    name: fail2ban
+    state: restarted
+

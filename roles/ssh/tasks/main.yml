@@ -9,7 +9,7 @@
       PasswordAuthentication no
       PubkeyAuthentication yes
       ChallengeResponseAuthentication no
-      UsePAM yes
+      UsePAM no
       X11Forwarding no
       AllowTcpForwarding local
       PermitEmptyPasswords no

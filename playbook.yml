@@ -1,14 +1,23 @@
 ---
 - hosts: all
   become: true
+
+  vars:
+    user_name: admin        # replace with your username
+    user_password: mysecretpassword  # replace with your password
+    user_ssh_key: "{{ lookup('file', '~/.ssh/postgres_public_id_ed25519.pub') }}"
+    is_control_node: false  # set to true on main dokploy control VPS
+
   roles:
     - packages
     - ssh
     - fail2ban
     - user
     - ufw
-    - dokploy
 
-  vars:
-    user_name: admin # replace with your username
-    user_password: mysecretpassword # replace with your password
+  # Include dokploy role conditionally
+  tasks:
+    - name: Include dokploy role only if this is the control VPS
+      include_role:
+        name: dokploy
+      when: is_control_node

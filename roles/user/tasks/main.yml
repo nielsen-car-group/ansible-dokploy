@@ -14,11 +14,11 @@
     group: "{{ user_name }}"
     mode: "0700"
 
-- name: Add SSH key to authorized_keys
+- name: Add SSH key to new user
   authorized_key:
     user: "{{ user_name }}"
     state: present
-    key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+    key: "{{ user_ssh_key }}"
 
 - name: Grant sudo privileges to the new user
   copy:
