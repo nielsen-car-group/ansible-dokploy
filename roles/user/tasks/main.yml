@@ -45,6 +45,40 @@
     group: root
     mode: 0755
 
+# Copy the setup script to the target machine
+- name: Copy setup script to target machine
+  copy:
+    src: "{{ playbook_dir }}/scripts/node-setup.sh"  # Relative to the playbook.yml
+    dest: "/home/{{ user_name }}/node-setup.sh"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0755
+
+# Ensure the setup script is executable
+- name: Ensure the script is executable
+  file:
+    path: "/home/{{ user_name }}/node-setup.sh"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0755
+
+# Copy the docker group setup script to the target machine
+- name: Copy docker group setup script to target machine
+  copy:
+    src: "{{ playbook_dir }}/scripts/node-setup-docker-group.sh"  # Relative to the playbook.yml
+    dest: "/home/{{ user_name }}/node-setup-docker-group.sh"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0755
+
+# Ensure the setup script is executable
+- name: Ensure the script is executable
+  file:
+    path: "/home/{{ user_name }}/node-setup-docker-group.sh"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: 0755
+
 # Source the SSH functions script in root's .bashrc
 - name: Source the SSH functions script in root's .bashrc
   lineinfile:
