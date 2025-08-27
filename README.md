@@ -71,13 +71,13 @@ After the playbook completes, log in to the external server and run the followin
 
 > ⚠️ This script is copied from Dokploy’s UI. If Dokploy updates their setup script, you may need to update this file manually.
 
-2. **Add non-root user to Docker group:**
+2. **Add non-root user to required groups:**
 
 ```bash
-./node-setup-docker-group.sh
+./node-setup-user-groups.sh
 ```
 
-> Required to run deployments from Dokploy on the external server.
+> Required to run deployments and backups from Dokploy on the external server.
 
 ---
 

@@ -65,8 +65,8 @@
 # Copy the docker group setup script to the target machine
 - name: Copy docker group setup script to target machine
   copy:
-    src: "{{ playbook_dir }}/scripts/node-setup-docker-group.sh"  # Relative to the playbook.yml
-    dest: "/home/{{ user_name }}/node-setup-docker-group.sh"
+    src: "{{ playbook_dir }}/scripts/node-setup-user-groups.sh"  # Relative to the playbook.yml
+    dest: "/home/{{ user_name }}/node-setup-user-groups.sh"
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: 0755
@@ -74,7 +74,7 @@
 # Ensure the setup script is executable
 - name: Ensure the script is executable
   file:
-    path: "/home/{{ user_name }}/node-setup-docker-group.sh"
+    path: "/home/{{ user_name }}/node-setup-user-groups.sh"
     owner: "{{ user_name }}"
     group: "{{ user_name }}"
     mode: 0755
