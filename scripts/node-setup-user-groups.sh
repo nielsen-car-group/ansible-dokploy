@@ -1,42 +1,55 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Ensure we're running as root
 if [ "$EUID" -ne 0 ]; then
   echo "❌ Please run this script as root or with sudo."
   exit 1
 fi
 
-# Default to the user who invoked sudo (if any), otherwise $USER
 TARGET_USER=${SUDO_USER:-$USER}
 
+echo "🔧 Ensuring 'acl' package is installed (for setfacl)..."
+if ! command -v setfacl >/dev/null 2>&1; then
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -y && apt-get install -y acl
+  elif command -v dnf >/dev/null 2>&1; then
+    dnf install -y acl
+  elif command -v yum >/dev/null 2>&1; then
+    yum install -y acl
+  fi
+fi
+
+# Docker group
 echo "👤 Adding user '$TARGET_USER' to the docker group..."
-# Ensure docker group exists
-if ! getent group docker > /dev/null 2>&1; then
-  echo "⚠️  'docker' group does not exist, creating it..."
-  groupadd docker
-fi
-# Add the user
+getent group docker >/dev/null 2>&1 || groupadd docker
 usermod -aG docker "$TARGET_USER"
-echo "✅ User '$TARGET_USER' added to the docker group."
 
-echo ""
-echo "👤 Adding user '$TARGET_USER' to the dokploy-logs group..."
-# Ensure dokploy-logs group exists
-if ! getent group dokploy-logs > /dev/null 2>&1; then
-  echo "⚠️ 'dokploy-logs' group does not exist, creating it..."
-  groupadd dokploy-logs
-fi
+# Dokploy groups
+echo "👥 Ensuring dokploy groups exist..."
+getent group dokploy >/dev/null 2>&1 || groupadd dokploy
+getent group dokploy-logs >/dev/null 2>&1 || groupadd dokploy-logs
 
-# Ensure /etc/dokploy/logs exists and set group ownership
+echo "📁 Preparing /etc/dokploy base dirs..."
+mkdir -p /etc/dokploy/compose
 mkdir -p /etc/dokploy/logs
-chgrp -R dokploy-logs /etc/dokploy/logs
-chmod -R 775 /etc/dokploy/logs
 
-# Add the user
+# Ownership + setgid so new files inherit the group
+chown -R root:dokploy /etc/dokploy/compose
+chown -R root:dokploy-logs /etc/dokploy/logs
+chmod 2775 /etc/dokploy/compose
+chmod 2775 /etc/dokploy/logs
+
+# ACLs so group always has rwx on new files/dirs
+setfacl -R -m g:dokploy:rwx /etc/dokploy/compose
+setfacl -dR -m g:dokploy:rwx /etc/dokploy/compose
+
+setfacl -R -m g:dokploy-logs:rwx /etc/dokploy/logs
+setfacl -dR -m g:dokploy-logs:rwx /etc/dokploy/logs
+
+# Add the deploy user to both groups
+usermod -aG dokploy "$TARGET_USER"
 usermod -aG dokploy-logs "$TARGET_USER"
-echo "✅ User '$TARGET_USER' added to the dokploy-logs group."
 
-echo ""
-echo "⚠️ IMPORTANT: You need to log out and log back in (or run 'newgrp docker' and 'newgrp dokploy-logs')"
-echo "   for the changes to take effect."
+echo "✅ User '$TARGET_USER' added to groups: docker, dokploy, dokploy-logs."
+echo "⚠️  IMPORTANT: log out and back in (or run 'newgrp docker' then 'newgrp dokploy') to apply group membership."
+
