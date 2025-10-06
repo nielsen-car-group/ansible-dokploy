@@ -9,48 +9,31 @@
 #
 # Usage examples:
 #   sudo ./install-signoz-hostmetrics.sh
-#   # or override any default at runtime:
-#   sudo SIGNOZ_HOST="metrics.example.com" SIGNOZ_USE_GRPC=false SIGNOZ_INSECURE=true ./install-signoz-hostmetrics.sh
+#   sudo SIGNOZ_HOST="127.0.0.1" ./install-signoz-hostmetrics.sh
+#   sudo SIGNOZ_HOST="metrics.example.com" SIGNOZ_USE_GRPC=false SIGNOZ_INSECURE=false ./install-signoz-hostmetrics.sh
 #
 set -euo pipefail
 
 #############################################
-#               DEFAULTS                    #
-# You can edit these OR override via env.   #
+#                  DEFAULTS                 #
+# (Edit here or override via environment)   #
 #############################################
 
-# Where your SigNoz collector is reachable
-DEFAULT_SIGNOZ_HOST="signoz.example.com"
-
-# Ports your collector exposes (from your Dokploy compose)
-DEFAULT_SIGNOZ_GRPC_PORT="4317"         # OTLP gRPC
-DEFAULT_SIGNOZ_HTTP_PORT="4318"         # OTLP HTTP
-
-# Choose transport: true = gRPC:4317, false = HTTP:4318
-DEFAULT_SIGNOZ_USE_GRPC="true"
-
-# TLS on OTLP connection? (true = no TLS; false = TLS on)
-# Most folks keep OTLP plaintext inside infra; set false if you’ve enabled TLS on 4317/4318.
-DEFAULT_SIGNOZ_INSECURE="true"
-
-# Optional tagging
-DEFAULT_SIGNOZ_ENV="prod"               # deployment.environment
-DEFAULT_SERVICE_NAMESPACE="host"        # resource.service.namespace
-
-# Hostmetrics collection cadence
-DEFAULT_COLLECTION_INTERVAL="30s"
-
-# otelcol-contrib version (keep in sync with SigNoz docs if you prefer)
-DEFAULT_OTEL_VERSION="0.128.0"
-
-# System user to run the service
-DEFAULT_OTEL_USER="otelcol"
-
-# Systemd service name
-DEFAULT_SERVICE_NAME="otelcol-hostmetrics"
+DEFAULT_SIGNOZ_HOST="signoz.example.com"    # set to your SigNoz host (or 127.0.0.1 on the SigNoz box)
+DEFAULT_SIGNOZ_GRPC_PORT="4317"             # OTLP gRPC
+DEFAULT_SIGNOZ_HTTP_PORT="4318"             # OTLP HTTP
+DEFAULT_SIGNOZ_USE_GRPC="true"              # true=gRPC(4317), false=HTTP(4318)
+DEFAULT_SIGNOZ_INSECURE="true"              # true=plaintext/no TLS; set false if using TLS on OTLP
+DEFAULT_SIGNOZ_ENV="prod"                   # deployment.environment tag
+DEFAULT_SERVICE_NAMESPACE="host"            # service.namespace tag
+DEFAULT_COLLECTION_INTERVAL="30s"           # hostmetrics scrape interval
+DEFAULT_OTEL_VERSION="0.128.0"              # otelcol-contrib release to install
+DEFAULT_OTEL_USER="otelcol"                 # system user
+DEFAULT_SERVICE_NAME="otelcol-hostmetrics"  # systemd unit name
+DEFAULT_ENABLE_LOG_EXPORTER="false"         # true to also print metrics to logs (debug)
 
 #############################################
-#        ENV OVERRIDES (if provided)       #
+#            ENV OVERRIDES (optional)       #
 #############################################
 
 SIGNOZ_HOST="${SIGNOZ_HOST:-$DEFAULT_SIGNOZ_HOST}"
@@ -64,16 +47,14 @@ COLLECTION_INTERVAL="${COLLECTION_INTERVAL:-$DEFAULT_COLLECTION_INTERVAL}"
 OTEL_VERSION="${OTEL_VERSION:-$DEFAULT_OTEL_VERSION}"
 OTEL_USER="${OTEL_USER:-$DEFAULT_OTEL_USER}"
 SERVICE_NAME="${SERVICE_NAME:-$DEFAULT_SERVICE_NAME}"
+ENABLE_LOG_EXPORTER="${ENABLE_LOG_EXPORTER:-$DEFAULT_ENABLE_LOG_EXPORTER}"
 
-# Advanced: provide full endpoints to override host/port logic
-# Examples:
-#   SIGNOZ_OTLP_GRPC_ENDPOINT="myhost:4317"
-#   SIGNOZ_OTLP_HTTP_ENDPOINT="http://myhost:4318"
+# Optional: direct endpoint overrides
 SIGNOZ_OTLP_GRPC_ENDPOINT="${SIGNOZ_OTLP_GRPC_ENDPOINT:-"${SIGNOZ_HOST}:${SIGNOZ_GRPC_PORT}"}"
 SIGNOZ_OTLP_HTTP_ENDPOINT="${SIGNOZ_OTLP_HTTP_ENDPOINT:-"http://${SIGNOZ_HOST}:${SIGNOZ_HTTP_PORT}"}"
 
 #############################################
-#          PRE-FLIGHT & DETECTION          #
+#           PRE-FLIGHT & DETECTION          #
 #############################################
 
 if [[ $EUID -ne 0 ]]; then
@@ -89,30 +70,31 @@ case "$ARCH" in
   *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
 esac
 
-# Choose exporter + endpoint based on SIGNOZ_USE_GRPC
 shopt -s nocasematch
 if [[ "$SIGNOZ_USE_GRPC" == "true" || "$SIGNOZ_USE_GRPC" == "yes" || "$SIGNOZ_USE_GRPC" == "1" ]]; then
-  EXPORTER_KIND="otlp"         # gRPC
-  OTLP_ENDPOINT="$SIGNOZ_OTLP_GRPC_ENDPOINT"
+  EXPORTER_KIND="otlp"
+  OTLP_ENDPOINT="$SIGNOZ_OTLP_GRPC_ENDPOINT"     # e.g. 127.0.0.1:4317
 else
-  EXPORTER_KIND="otlphttp"     # HTTP
-  OTLP_ENDPOINT="$SIGNOZ_OTLP_HTTP_ENDPOINT"
-  # Ensure HTTP endpoint has scheme
-  if [[ ! "$OTLP_ENDPOINT" =~ ^https?:// ]]; then
-    OTLP_ENDPOINT="http://${OTLP_ENDPOINT}"
+  EXPORTER_KIND="otlphttp"
+  # Ensure scheme on HTTP
+  if [[ "$SIGNOZ_OTLP_HTTP_ENDPOINT" =~ ^https?:// ]]; then
+    OTLP_ENDPOINT="$SIGNOZ_OTLP_HTTP_ENDPOINT"   # e.g. http://host:4318
+  else
+    OTLP_ENDPOINT="http://${SIGNOZ_OTLP_HTTP_ENDPOINT}"
   fi
 fi
 shopt -u nocasematch
 
-echo "==> Config summary"
+echo "==> SigNoz Hostmetrics Installer"
 echo "    Host:                 $SIGNOZ_HOST"
-echo "    Use gRPC (4317):      $SIGNOZ_USE_GRPC"
+echo "    OTLP via gRPC:        $SIGNOZ_USE_GRPC"
 echo "    OTLP endpoint:        $OTLP_ENDPOINT"
 echo "    Insecure TLS:         $SIGNOZ_INSECURE"
 echo "    Env tag:              $SIGNOZ_ENV"
 echo "    Service namespace:    $SERVICE_NAMESPACE"
 echo "    Interval:             $COLLECTION_INTERVAL"
 echo "    otelcol-contrib ver:  $OTEL_VERSION"
+echo "    Log exporter:         $ENABLE_LOG_EXPORTER"
 echo
 
 #############################################
@@ -176,6 +158,16 @@ chown -R "$OTEL_USER":"$OTEL_USER" "$INSTALL_DIR" "$CONF_DIR" "$DATA_DIR"
 
 HOSTNAME_VAL="$(hostname -f 2>/dev/null || hostname)"
 
+# optional logging exporter (debug)
+LOGGING_EXPORTER_YAML=""
+PIPELINE_EXPORTERS="$EXPORTER_KIND"
+shopt -s nocasematch
+if [[ "$ENABLE_LOG_EXPORTER" == "true" || "$ENABLE_LOG_EXPORTER" == "yes" || "$ENABLE_LOG_EXPORTER" == "1" ]]; then
+  LOGGING_EXPORTER_YAML=$'  logging:\n    verbosity: detailed\n'
+  PIPELINE_EXPORTERS="logging, ${EXPORTER_KIND}"
+fi
+shopt -u nocasematch
+
 cat > "${CONF_DIR}/hostmetrics.yaml" <<EOF
 receivers:
   hostmetrics:
@@ -208,14 +200,12 @@ processors:
         action: upsert
 
 exporters:
-  otlp:
-    # gRPC
-    endpoint: "${OTLP_ENDPOINT}"
+${LOGGING_EXPORTER_YAML}  otlp:
+    endpoint: "${SIGNOZ_OTLP_GRPC_ENDPOINT}"
     tls:
       insecure: ${SIGNOZ_INSECURE}
   otlphttp:
-    # HTTP
-    endpoint: "${OTLP_ENDPOINT}"
+    endpoint: "${SIGNOZ_OTLP_HTTP_ENDPOINT}"
     tls:
       insecure: ${SIGNOZ_INSECURE}
 
@@ -224,7 +214,7 @@ service:
     metrics:
       receivers: [hostmetrics]
       processors: [resourcedetection, resource, batch]
-      exporters: [${EXPORTER_KIND}]
+      exporters: [${PIPELINE_EXPORTERS}]
 EOF
 
 #############################################
@@ -240,7 +230,7 @@ Wants=network-online.target
 [Service]
 User=${OTEL_USER}
 Group=${OTEL_USER}
-ExecStart=${BIN_DIR}/otelcol-contrib --config=${CONF_DIR}/hostmetrics.yaml --mem-ballast-size-mib=0
+ExecStart=${BIN_DIR}/otelcol-contrib --config=${CONF_DIR}/hostmetrics.yaml
 Restart=on-failure
 RestartSec=5s
 LimitNOFILE=65536

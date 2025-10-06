@@ -37,13 +37,6 @@
     proto: tcp
   tags: ufw_rules
 
-- name: UFW - Allow Postgres Custom Port
-  community.general.ufw:
-    rule: allow
-    port: 6543
-    proto: tcp
-  tags: ufw_rules
-
 - name: UFW - Enable UFW
   community.general.ufw:
     state: enabled
