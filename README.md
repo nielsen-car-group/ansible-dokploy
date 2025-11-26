@@ -91,3 +91,32 @@ ansible-playbook -i hosts playbook.yml -l server -u <user_name>
 
 > Replace `<user_name>` with the non-root user defined in the playbook variables.
 
+---
+
+## Security Consideration
+
+### Fail2Ban Traefik
+
+A fail2ban jail is created for requests that trigger 401, 403, 400 or 429 errors continously. In order for this to work reliably
+and satisfactory you will have to slightly alter the traefik config to ensure new request logs are not buffered or skipped.
+
+in the dokploy ui (Traefik File System -> traefik.yml) or directly in the config at `/etc/dokploy/traefik/traefik.yml` update
+the accessLog entry to not filter requests and lower the in memory buffering size as follows:
+
+```yaml
+accessLog:
+  filePath: /etc/dokploy/traefik/dynamic/access.log
+  format: json
+  bufferingSize: 10
+```
+
+#### Note for Cloudflare users
+
+If your domain uses Cloudflare **with the orange cloud enabled**, Traefik (and Fail2ban) will only see **Cloudflare’s IP addresses**, not the real visitor IP.
+This means the Traefik Fail2ban jail cannot reliably block individual attackers, because bans are applied to Cloudflare edge servers instead.
+
+**If you use Cloudflare:**
+Consider the Traefik Fail2ban jail optional. Use Cloudflare’s own **Firewall Rules**, **WAF**, or **Rate Limiting** for real client-IP blocking.
+Fail2ban will still protect SSH and other services on the server as normal.
+
+---

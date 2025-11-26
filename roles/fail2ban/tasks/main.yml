@@ -31,6 +31,38 @@
     mode: 0644
   notify: Restart fail2ban
 
+- name: Create Fail2ban filter for Traefik HTTP errors
+  copy:
+    dest: /etc/fail2ban/filter.d/traefik-http.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Definition]
+      # Match Traefik JSON access logs, eg:
+      # {"ClientAddr":"1.2.3.4:12345","ClientHost":"1.2.3.4",...,"DownstreamStatus":401,...}
+      failregex = ^.*"ClientHost":"<HOST>".*"DownstreamStatus":(401|403|400|429).*
+      ignoreregex =
+  notify: Restart fail2ban
+
+- name: Create Fail2ban jail for Traefik HTTP errors
+  copy:
+    dest: /etc/fail2ban/jail.d/traefik.local
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [traefik-http]
+      enabled  = true
+      filter   = traefik-http
+      port     = http,https
+      logpath  = /etc/dokploy/traefik/dynamic/access.log
+      backend  = auto
+      maxretry = 15
+      findtime = 300
+      bantime  = 3600
+  notify: Restart fail2ban
+
 - name: Restart fail2ban
   systemd:
     name: fail2ban
