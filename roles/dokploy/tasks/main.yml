@@ -1,3 +1,4 @@
+---
 - name: Check if Dokploy (Traefik) container is running
   community.docker.docker_container_info:
     name: dokploy-traefik

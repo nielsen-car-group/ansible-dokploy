@@ -1,9 +1,4 @@
 ---
-- name: UFW - Reset UFW rules (optional step)
-  community.general.ufw:
-    state: reset
-  tags: ufw_rules
-
 - name: UFW - Set default incoming policy to deny
   community.general.ufw:
     direction: incoming
@@ -16,9 +11,9 @@
     policy: allow
   tags: ufw_rules
 
-- name: UFW - Allow SSH Server
+- name: UFW - Rate limit SSH
   community.general.ufw:
-    rule: allow
+    rule: limit
     port: 2275
     proto: tcp
   tags: ufw_rules

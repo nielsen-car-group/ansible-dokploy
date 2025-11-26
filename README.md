@@ -34,7 +34,7 @@ This playbook will:
 | Variable          | Default                                 | Description                                            |
 | ----------------- | --------------------------------------- | ------------------------------------------------------ |
 | `user_name`       | `admin`                                 | Name of the non-root user to create on the VPS         |
-| `user_password`   | `mysecretpassword`                      | Password for the non-root user                         |
+| `user_password`   | `mysecretpassword`                      | Password for the non-root user. Becomes disabled (doesn't matter)                        |
 | `user_ssh_key`    | `~/.ssh/postgres_public_id_ed25519.pub` | Public key to copy to the server for non-root login    |
 | `is_control_node` | `false`                                 | Set to `true` if this is the main Dokploy control node |
 

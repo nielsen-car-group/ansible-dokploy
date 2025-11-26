@@ -14,6 +14,7 @@
     - fail2ban
     - user
     - ufw
+    - sysctl
 
   # Include dokploy role conditionally
   tasks:

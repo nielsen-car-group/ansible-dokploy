@@ -1,3 +1,4 @@
+---
 # Secure SSH settings for pubkey-only authentication
 - name: Replace /etc/ssh/sshd_config with secure pubkey-only configuration
   copy:
@@ -15,6 +16,10 @@
       PermitEmptyPasswords no
       ClientAliveInterval 300
       ClientAliveCountMax 2
+      AllowUsers {{ user_name }}
+      Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr
+      MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+      KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
     owner: root
     group: root
     mode: "0600"

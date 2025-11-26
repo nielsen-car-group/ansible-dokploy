@@ -1,10 +1,23 @@
 ---
-- name: Ensure admin user exists and password is locked
+- name: Ensure admin user exists
   ansible.builtin.user:
     name: "{{ user_name }}"
     shell: /bin/bash
     create_home: yes
-    password_lock: true
+
+- name: Check if random password has already been set for admin
+  ansible.builtin.stat:
+    path: "/root/.{{ user_name }}_password_set"
+  register: admin_pw_marker
+
+- name: Set random password for admin (local/console use only)
+  ansible.builtin.shell: |
+    pw="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+    echo "{{ user_name }}:${pw}" | chpasswd
+    touch "/root/.{{ user_name }}_password_set"
+  args:
+    executable: /bin/bash
+  when: not admin_pw_marker.stat.exists
 
 - name: Ensure the SSH directory exists for the new user
   file:
