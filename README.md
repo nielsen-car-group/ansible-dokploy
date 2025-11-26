@@ -109,6 +109,9 @@ accessLog:
   bufferingSize: 10
 ```
 
+*important:* for remote servers you will have to add the above block to your traefik config for fail2ban to start.
+You can do this via the dokploy ui (Remote Servers -> ... -> Show Traefik File System) or directly as described above.
+
 #### Note for Cloudflare users
 
 If your domain uses Cloudflare **with the orange cloud enabled**, Traefik (and Fail2ban) will only see **Cloudflare’s IP addresses**, not the real visitor IP.

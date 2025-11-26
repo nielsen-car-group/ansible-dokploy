@@ -11,9 +11,9 @@
     policy: allow
   tags: ufw_rules
 
-- name: UFW - Rate limit SSH
+- name: UFW - Allow SSH
   community.general.ufw:
-    rule: limit
+    rule: allow
     port: 2275
     proto: tcp
   tags: ufw_rules
