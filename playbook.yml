@@ -3,10 +3,9 @@
   become: true
 
   vars:
-    user_name: admin        # replace with your username
-    user_password: mysecretpassword  # password will be disabled so this doesnt matter
+    user_name: admin      # replace with your username
     user_ssh_key: "{{ lookup('file', '~/.ssh/ncg-vps/main.pub') }}"
-    is_control_node: true  # set to true on main dokploy control VPS
+    is_control_node: true # set to true on main dokploy control VPS
 
   roles:
     - packages
