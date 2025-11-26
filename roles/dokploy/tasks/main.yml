@@ -1,9 +1,11 @@
-- name: Check if Dokploy container is running
+- name: Check if Dokploy (Traefik) container is running
   community.docker.docker_container_info:
-    name: dokploy
+    name: dokploy-traefik
   register: dokploy_container
   ignore_errors: true
 
 - name: Install Dokploy if not running
   ansible.builtin.shell: curl -sSL https://dokploy.com/install.sh | sh
-  when: dokploy_container.containers is not defined or dokploy_container.containers | length == 0
+  when: dokploy_container is failed
+        or not (dokploy_container.exists | default(false))
+

@@ -42,7 +42,7 @@
         "${distro_id}:${distro_codename}-security";
       };
       Unattended-Upgrade::Automatic-Reboot "true";
-      Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+      Unattended-Upgrade::Automatic-Reboot-Time "07:00";
     owner: root
     group: root
     mode: '0644'
@@ -52,4 +52,4 @@
     name: unattended-upgrades
     enabled: yes
     state: started
-  when: ansible_service_mgr == 'systemd'
+  when: ansible_facts["service_mgr"] == "systemd"
