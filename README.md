@@ -120,3 +120,75 @@ Consider the Traefik Fail2ban jail optional. Use Cloudflare’s own **Firewall R
 Fail2ban will still protect SSH and other services on the server as normal.
 
 ---
+
+## System Hardening
+
+This playbook includes a small set of **safe hardening measures** that work well with
+Dokploy, Docker, Traefik, Cloudflare, and typical web apps.
+
+These settings are intentionally conservative and should not break normal workloads.
+
+---
+
+### 1. Kernel / sysctl Hardening
+
+A `/etc/sysctl.d/99-hardening.conf` file is installed with safe defaults:
+
+- Keep IP forwarding on (required for Docker)
+- Disable ICMP redirects
+- Enable SYN cookies (basic DoS protection)
+- Log suspicious packets ("martians")
+
+Additional local protections:
+
+- Disable SUID core dumps
+- Restrict ptrace (one user can’t inspect another’s processes)
+- Restrict access to kernel logs and pointers
+- Restrict perf events to root
+- Raise file watcher limits (useful for Node apps)
+
+These settings reduce attack surface without affecting Docker networking.
+
+To temporarily disable:
+
+```
+mv /etc/sysctl.d/99-hardening.conf /etc/sysctl.d/99-hardening.conf.disabled
+sysctl --system
+```
+
+---
+
+### 2. Disable Rare Kernel Modules
+
+A `/etc/modprobe.d/hardening.conf` file disables a few unused protocols:
+
+- dccp
+- sctp
+- rds
+- tipc
+
+These are not needed on typical servers and disabling them is safe.
+
+---
+
+### 3. Random Local Password for Admin User
+
+The admin user receives a **random system password** (stored only in `/etc/shadow`).
+
+Password login over SSH is still disabled — this is just for local console safety.
+
+---
+
+### 4. Fail2ban Protection
+
+Fail2ban protects:
+
+- SSH
+- Traefik HTTP (4xx abuse)
+
+Cloudflare users: bans will apply to Cloudflare edge IPs, not end-user IPs.
+
+---
+
+These hardening measures are small, stable, and chosen to be compatible with Docker-based deployments.
+If you want additional options (tmp hardening, Docker daemon options, etc.) they can be added later.

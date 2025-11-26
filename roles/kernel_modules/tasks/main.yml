@@ -1,0 +1,14 @@
+---
+- name: Disable uncommon network kernel modules (hardening)
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Disable rarely used network protocols to reduce attack surface
+
+      install dccp /bin/true
+      install sctp /bin/true
+      install rds /bin/true
+      install tipc /bin/true

@@ -27,4 +27,20 @@
 
       # Enable SYN cookies (basic SYN flood protection)
       net.ipv4.tcp_syncookies = 1
+
+      # Do not dump SUID binaries core (prevents leaking secrets)
+      fs.suid_dumpable = 0
+
+      # Restrict ptrace (one user can't trace another's processes)
+      kernel.yama.ptrace_scope = 1
+
+      # Restrict kernel logs and pointers (harder info-leaks)
+      kernel.dmesg_restrict = 1
+      kernel.kptr_restrict = 2
+
+      # Restrict perf events to root only
+      kernel.perf_event_paranoid = 3
+
+      # Raise inotify watch limit (good for Node apps, etc.)
+      fs.inotify.max_user_watches = 524288
   notify: Reload sysctl

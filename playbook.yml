@@ -15,6 +15,7 @@
     - user
     - ufw
     - sysctl
+    - kernel_modules
 
   # Include dokploy role conditionally
   tasks:
